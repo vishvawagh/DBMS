@@ -16,119 +16,129 @@ than $1,200.
 6. Delete depositors having deposit less than 5000
 7. Create a view on deposit table.
 '''
-Here are the SQL table creations and queries based on your requirements:
+To solve these queries, we will first create the tables, add primary keys and foreign keys where applicable, insert sample data, and then provide the SQL queries for each scenario:
 
-1. **Create Tables with Primary and Foreign Keys:**
+1. Create the tables:
 
 ```sql
--- Create the 'Deposit' table
+-- Create the Deposit table
 CREATE TABLE Deposit (
     actno INT PRIMARY KEY,
-    cname VARCHAR(50),
-    bname VARCHAR(50),
+    cname VARCHAR(100),
+    bname VARCHAR(100),
     amount DECIMAL(10, 2),
-    adate DATE,
-    FOREIGN KEY (cname) REFERENCES Customers(cname),
-    FOREIGN KEY (bname) REFERENCES Branch(bname)
+    adate DATE
 );
 
--- Create the 'Branch' table
+-- Create the Branch table
 CREATE TABLE Branch (
-    bname VARCHAR(50) PRIMARY KEY,
-    city VARCHAR(50)
+    bname VARCHAR(100) PRIMARY KEY,
+    city VARCHAR(100)
 );
 
--- Create the 'Customers' table
+-- Create the Customers table
 CREATE TABLE Customers (
-    cname VARCHAR(50) PRIMARY KEY,
-    city VARCHAR(50)
+    cname VARCHAR(100) PRIMARY KEY,
+    city VARCHAR(100)
 );
 
--- Create the 'Borrow' table
+-- Create the Borrow table
 CREATE TABLE Borrow (
     loanno INT PRIMARY KEY,
-    cname VARCHAR(50),
-    bname VARCHAR(50),
+    cname VARCHAR(100),
+    bname VARCHAR(100),
     amount DECIMAL(10, 2),
     FOREIGN KEY (cname) REFERENCES Customers(cname),
     FOREIGN KEY (bname) REFERENCES Branch(bname)
 );
-```
 
-2. **Insert Data into the Tables:**
+-- Insert sample data into the tables
+INSERT INTO Deposit (actno, cname, bname, amount, adate)
+VALUES
+    (1, 'John', 'Perryridge', 4500.00, '1996-04-15'),
+    (2, 'Alice', 'Brighton', 6000.00, '1997-02-20'),
+    (3, 'Eva', 'Perryridge', 3800.00, '1996-05-05'),
+    (4, 'Bob', 'Brighton', 7000.00, '1997-01-25'),
+    (5, 'Anil', 'Brighton', 5500.00, '1997-03-15');
 
-```sql
--- Insert data into the 'Branch' table
 INSERT INTO Branch (bname, city)
 VALUES
     ('Perryridge', 'New York'),
-    ('Brighton', 'Bombay'),
-    ('Redwood', 'Pune');
+    ('Brighton', 'New York');
 
--- Insert data into the 'Customers' table
 INSERT INTO Customers (cname, city)
 VALUES
-    ('Anil', 'Pune'),
+    ('John', 'New York'),
+    ('Alice', 'New York'),
+    ('Eva', 'New York'),
     ('Bob', 'New York'),
-    ('Cathy', 'Bombay');
+    ('Anil', 'New York');
 
--- Insert data into the 'Deposit' table
-INSERT INTO Deposit (actno, cname, bname, amount, adate)
+INSERT INTO Borrow (loanno, cname, bname, amount)
 VALUES
-    (1001, 'Anil', 'Perryridge', 5000.00, '1996-03-01'),
-    (1002, 'Anil', 'Redwood', 3500.00, '1996-04-15'),
-    (1003, 'Bob', 'Perryridge', 2000.00, '1997-01-12'),
-    (1004, 'Cathy', 'Brighton', 4500.00, '1996-11-05');
-
--- Insert data into the 'Borrow' table (assuming data is available)
--- You can add data as needed for this table.
+    (101, 'John', 'Perryridge', 3000.00),
+    (102, 'Alice', 'Brighton', 4000.00),
+    (103, 'Eva', 'Perryridge', 2500.00),
+    (104, 'Bob', 'Brighton', 3500.00),
+    (105, 'Anil', 'Brighton', 2800.00);
 ```
 
-3. **Queries by letter:**
+Now that you've created the tables, added primary keys and foreign keys, and inserted sample data, you can proceed with the SQL queries:
 
-a. Display names of all branches located in the city of Bombay.
+1. Display names of depositors having an amount greater than 4000:
+
 ```sql
-SELECT bname
-FROM Branch
-WHERE city = 'Bombay';
+SELECT cname
+FROM Deposit
+WHERE amount > 4000;
 ```
 
-b. Display account numbers and amounts of depositors.
-```sql
-SELECT actno, amount
-FROM Deposit;
-```
+2. Display the account date of customers named Anil:
 
-c. Update the city of customer 'Anil' from Pune to Mumbai.
 ```sql
-UPDATE Customers
-SET city = 'Mumbai'
+SELECT adate
+FROM Deposit
 WHERE cname = 'Anil';
 ```
 
-d. Find the number of depositors in the bank.
+3. Display the account number and deposit amount of customers having accounts opened between '1996-12-01' and '1997-05-01':
+
 ```sql
-SELECT COUNT(DISTINCT cname) AS NumberOfDepositors
+SELECT actno, amount
+FROM Deposit
+WHERE adate BETWEEN '1996-12-01' AND '1997-05-01';
+```
+
+4. Find the average account balance at the Perryridge branch:
+
+```sql
+SELECT AVG(amount) AS AverageBalance
+FROM Deposit
+WHERE bname = 'Perryridge';
+```
+
+5. Find the names of all branches where the average account balance is more than $1,200:
+
+```sql
+SELECT bname
+FROM Deposit
+GROUP BY bname
+HAVING AVG(amount) > 1200;
+```
+
+6. Delete depositors having deposits less than 5000:
+
+```sql
+DELETE FROM Deposit
+WHERE amount < 5000;
+```
+
+7. Create a view on the Deposit table:
+
+```sql
+CREATE VIEW DepositView AS
+SELECT actno, cname, bname, amount, adate
 FROM Deposit;
 ```
 
-e. Calculate the minimum and maximum amount of customers.
-```sql
-SELECT MIN(amount) AS MinAmount, MAX(amount) AS MaxAmount
-FROM Deposit;
-```
-
-f. Create an index on the 'Deposit' table.
-```sql
-CREATE INDEX idx_amount ON Deposit(amount);
-```
-
-g. Create a view on the 'Borrow' table.
-```sql
-CREATE VIEW BorrowView AS
-SELECT loanno, cname, bname, amount
-FROM Borrow;
-```
-
-You can now query the `BorrowView` as if it were a table to simplify your future queries.
-
+You've now created tables, inserted data, and executed the SQL queries for the given scenarios, including creating a view on the Deposit table.
