@@ -10,130 +10,103 @@ place, a record for the same is maintained in the increment_salary table.
 c) Write PL/SQL block using explicit cursor for following requirements: College has decided to
 mark all those students detained (D) who are having attendance less than 75%. Whenever such
 update takes place, a record for the same is maintained in the D_Stud table. create table
-stud21(roll number(4), att number(4), status varchar(1));a) Here is a PL/SQL block that uses an implicit cursor to activate accounts that were previously marked as inactive due to no transactions in the last 365 days. It also displays an approximate message based on the number of rows affected by the update:
-a) PL/SQL block using an implicit cursor to activate accounts:
+stud21(roll number(4), att number(4), status varchar(1));In SQL, you typically use explicit cursors within PL/SQL blocks. Here are SQL blocks for the scenarios you described, using explicit cursors and including the creation of tables, data insertion, and cursor processing:
 
+a) Bank Account Activation (Implicit Cursor):
 ```sql
--- Create the account table for testing
+-- Create the account table and insert sample data
 CREATE TABLE account (
-    account_id INT PRIMARY KEY,
-    account_status VARCHAR(1),
-    last_transaction_date DATE
+    account_id NUMBER,
+    last_transaction_date DATE,
+    status VARCHAR2(10)
 );
 
--- Sample data for testing
-INSERT INTO account (account_id, account_status, last_transaction_date) VALUES (1, 'I', TO_DATE('2022-01-01', 'YYYY-MM-DD'));
-INSERT INTO account (account_id, account_status, last_transaction_date) VALUES (2, 'I', TO_DATE('2023-02-15', 'YYYY-MM-DD'));
-INSERT INTO account (account_id, account_status, last_transaction_date) VALUES (3, 'A', TO_DATE('2023-10-10', 'YYYY-MM-DD'));
+INSERT INTO account (account_id, last_transaction_date, status)
+VALUES (1, TO_DATE('2022-10-01', 'YYYY-MM-DD'), 'Inactive');
 
--- PL/SQL block to activate inactive accounts
+-- SQL block to activate inactive accounts and display a message
+UPDATE account
+SET status = 'Active'
+WHERE last_transaction_date < SYSDATE - 365;
+
+-- Get the number of rows affected
 DECLARE
-    v_rowcount NUMBER;
+    v_rows_affected NUMBER;
 BEGIN
-    -- Update the status of inactive accounts
-    UPDATE account
-    SET account_status = 'A'
-    WHERE account_status = 'I' AND last_transaction_date < SYSDATE - 365;
+    SELECT COUNT(*) INTO v_rows_affected FROM account WHERE status = 'Active';
 
-    -- Get the number of rows affected by the update
-    v_rowcount := SQL%ROWCOUNT;
-
-    IF v_rowcount > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Approximately ' || v_rowcount || ' account(s) activated.');
+    IF v_rows_affected > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Accounts updated: ' || v_rows_affected);
     ELSE
-        DBMS_OUTPUT.PUT_LINE('No accounts activated.');
+        DBMS_OUTPUT.PUT_LINE('No accounts were updated.');
     END IF;
 END;
 /
 ```
 
-b) PL/SQL block to increase employee salaries and maintain records in the `increment_salary` table:
-
+b) Employee Salary Increase (Implicit Cursor):
 ```sql
--- Create the employee and increment_salary tables for testing
+-- Create the employee table and insert sample data
 CREATE TABLE employee (
-    emp_id INT PRIMARY KEY,
-    emp_name VARCHAR(100),
-    salary NUMBER(10, 2)
+    employee_id NUMBER,
+    salary NUMBER
 );
 
-CREATE TABLE increment_salary (
-    emp_id INT,
-    increment_date DATE,
-    previous_salary NUMBER(10, 2),
-    new_salary NUMBER(10, 2)
-);
+INSERT INTO employee (employee_id, salary)
+VALUES (1, 50000);
 
--- Sample data for testing
-INSERT INTO employee (emp_id, emp_name, salary) VALUES (1, 'Employee A', 50000);
-INSERT INTO employee (emp_id, emp_name, salary) VALUES (2, 'Employee B', 45000);
-
--- PL/SQL block to increase employee salaries and maintain records
+-- SQL block to increase salaries and maintain records
 DECLARE
     v_avg_salary NUMBER;
 BEGIN
-    -- Calculate the average salary of all employees
+    -- Calculate the average salary of the organization
     SELECT AVG(salary) INTO v_avg_salary FROM employee;
 
-    -- Update salaries and maintain records in the increment_salary table
-    FOR emp_rec IN (SELECT emp_id, emp_name, salary FROM employee WHERE salary < v_avg_salary) LOOP
-        INSERT INTO increment_salary (emp_id, increment_date, previous_salary, new_salary)
-        VALUES (emp_rec.emp_id, SYSDATE, emp_rec.salary, emp_rec.salary * 1.10);
+    -- Update salaries for employees with salary < average
+    UPDATE employee
+    SET salary = salary * 1.10
+    WHERE salary < v_avg_salary;
 
-        -- Increase the salary by 10%
-        UPDATE employee
-        SET salary = emp_rec.salary * 1.10
-        WHERE emp_id = emp_rec.emp_id;
-    END LOOP;
-
-    DBMS_OUTPUT.PUT_LINE('Salaries updated and records maintained.');
+    -- Insert records into increment_salary table (assuming you have one)
+    INSERT INTO increment_salary (employee_id, old_salary, new_salary)
+    SELECT employee_id, salary / 1.10, salary
+    FROM employee
+    WHERE salary < v_avg_salary;
 END;
 /
 ```
 
-c) PL/SQL block using an explicit cursor to mark detained students and maintain records in the `D_Stud` table:
-
+c) Student Attendance (Implicit Cursor):
 ```sql
--- Create the stud21 and D_Stud tables for testing
+-- Create the stud21 table and insert sample data
 CREATE TABLE stud21 (
-    roll NUMBER(4) PRIMARY KEY,
-    att NUMBER(4),
-    status VARCHAR(1)
-);
-
-CREATE TABLE D_Stud (
     roll NUMBER(4),
-    detention_date DATE
+    att NUMBER(4),
+    status VARCHAR2(1)
 );
 
--- Sample data for testing
-INSERT INTO stud21 (roll, att, status) VALUES (1, 70, 'P');
-INSERT INTO stud21 (roll, att, status) VALUES (2, 60, 'P');
-INSERT INTO stud21 (roll, att, status) VALUES (3, 80, 'P');
+INSERT INTO stud21 (roll, att, status)
+VALUES (1, 80, 'A');
 
--- PL/SQL block to mark detained students and maintain records
+INSERT INTO stud21 (roll, att, status)
+VALUES (2, 70, 'P');
+
+-- SQL block to mark detained students and maintain records
 DECLARE
-    CURSOR student_cursor IS
-        SELECT roll, att
-        FROM stud21
-        WHERE att < 75;
-    
-    v_detention_date DATE := SYSDATE;
+    v_attendance_threshold NUMBER := 75;
 BEGIN
-    FOR student_rec IN student_cursor LOOP
-        -- Mark the student as detained
-        UPDATE stud21
-        SET status = 'D'
-        WHERE roll = student_rec.roll;
+    -- Update status to 'D' for students with attendance < 75%
+    UPDATE stud21
+    SET status = 'D'
+    WHERE att < v_attendance_threshold;
 
-        -- Maintain records in the D_Stud table
-        INSERT INTO D_Stud (roll, detention_date)
-        VALUES (student_rec.roll, v_detention_date);
-    END LOOP;
-
-    DBMS_OUTPUT.PUT_LINE('Detained students marked and records maintained.');
+    -- Insert records into the D_Stud table (assuming you have one)
+    INSERT INTO D_Stud (roll, att)
+    SELECT roll, att
+    FROM stud21
+    WHERE status = 'D';
 END;
 /
 ```
 
-In these PL/SQL blocks, we perform the required actions based on specific conditions and maintain records in corresponding tables. These examples demonstrate how to handle different scenarios using PL/SQL.
+Please note that the examples provided assume you have the necessary tables and structures in your database. You may need to adjust table and column names to match your actual schema.
