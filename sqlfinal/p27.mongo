@@ -1,0 +1,68 @@
+Create a database called ‘library’, create a collection called ‘books’.find the number of books
+having pages less 250 pages and consider ad small book and greater than 250 consider as Big
+book using Map Reduce function
+To find the number of books with pages less than or equal to 250 pages and categorize them as "small books," as well as those with more than 250 pages categorized as "big books" using a MapReduce function in MongoDB, you can follow these steps:
+
+1. Create a database called 'library':
+
+```javascript
+use library
+```
+
+2. Create a collection called 'books' and insert sample book data:
+
+```javascript
+db.createCollection("books")
+
+db.books.insertMany([
+    {
+        title: "Book1",
+        pages: 200
+    },
+    {
+        title: "Book2",
+        pages: 300
+    },
+    {
+        title: "Book3",
+        pages: 150
+    },
+    {
+        title: "Book4",
+        pages: 270
+    },
+    {
+        title: "Book5",
+        pages: 220
+    }
+])
+```
+
+3. Perform the MapReduce operation:
+
+Map Function:
+```javascript
+var mapFunction = function () {
+    var category = (this.pages <= 250) ? "small book" : "big book";
+    emit(category, 1);
+};
+
+Reduce Function:
+```javascript
+var reduceFunction = function (key, values) {
+    return Array.sum(values);
+};
+```
+
+Execute the MapReduce operation:
+
+```javascript
+db.books.mapReduce(mapFunction, reduceFunction, { out: "book_categories" });
+
+// Query the results
+db.book_categories.find();
+```
+
+This MapReduce operation will categorize the books as "small book" or "big book" based on the number of pages and count the number of books in each category. You can query the `book_categories` collection to see the results.
+
+Make sure to adjust the field names and criteria according to your actual book data if needed.

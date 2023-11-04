@@ -1,0 +1,90 @@
+Design and Implement following query using MongoDB
+1. Create a collection called ‘games’.
+2. Add 5 games to the database. Give each document the following properties:
+name, gametype, rating (out of 100)
+3. Write a query that returns all the games
+4. Write a query that returns the 3 highest rated games.
+5. Update your two favourite games to have two achievements called ‘Game
+Master’ and ‘Speed Demon’.
+6. Write a query that returns all the games that have both the ‘Game Maser’ and
+7. the ‘Speed Demon’ achievements.
+8. Write a query that returns only games that have achievements
+To design and implement the given queries using MongoDB, follow these steps:
+
+1. Create a collection called 'games':
+
+```javascript
+use yourdb
+db.createCollection("games")
+```
+
+2. Add 5 games to the database with the specified properties:
+
+```javascript
+db.games.insertMany([
+   {
+      name: "Game1",
+      gametype: "Action",
+      rating: 90
+   },
+   {
+      name: "Game2",
+      gametype: "RPG",
+      rating: 85
+   },
+   {
+      name: "Game3",
+      gametype: "Strategy",
+      rating: 92
+   },
+   {
+      name: "Game4",
+      gametype: "Puzzle",
+      rating: 78
+   },
+   {
+      name: "Game5",
+      gametype: "Adventure",
+      rating: 88
+   }
+])
+```
+
+3. Write a query to return all the games:
+
+```javascript
+db.games.find({})
+```
+
+4. Write a query to return the 3 highest rated games:
+
+```javascript
+db.games.find().sort({ rating: -1 }).limit(3)
+```
+
+5. Update your two favorite games to have achievements:
+
+```javascript
+db.games.updateMany(
+   { name: { $in: ["Game1", "Game3"] } },
+   {
+      $set: {
+         achievements: ["Game Master", "Speed Demon"]
+      }
+   }
+)
+```
+
+6. Write a query to return all the games that have both the 'Game Master' and 'Speed Demon' achievements:
+
+```javascript
+db.games.find({ achievements: { $all: ["Game Master", "Speed Demon"] } })
+```
+
+7. Write a query to return only games that have achievements:
+
+```javascript
+db.games.find({ achievements: { $exists: true } })
+```
+
+These queries allow you to create and query the 'games' collection in MongoDB. Make sure to adjust the game names and other details as needed.

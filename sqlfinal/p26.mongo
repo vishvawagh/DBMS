@@ -1,0 +1,40 @@
+Using MapReduce in mongodb solve following queries on given below collection.
+1. Import zip.json.
+2. Find total population in each state.
+To find the total population in each state using MapReduce in MongoDB, you need to first import the `zip.json` data into a collection and then perform the MapReduce operation. Assuming you've imported the data into a collection named `zips`, you can follow these steps:
+
+1. Import the `zip.json` data into MongoDB using the `mongoimport` command if you haven't already:
+
+```bash
+mongoimport --db yourdb --collection zips --file path/to/zip.json
+```
+
+Replace `yourdb` with the name of your database and `path/to/zip.json` with the actual path to your `zip.json` file.
+
+2. Perform the MapReduce operation to find the total population in each state:
+
+Map Function:
+```javascript
+var mapFunction = function() {
+    emit(this.state, this.pop);
+};
+
+Reduce Function:
+```javascript
+var reduceFunction = function(key, values) {
+    return Array.sum(values);
+};
+```
+
+Execute the MapReduce operation:
+
+```javascript
+db.zips.mapReduce(mapFunction, reduceFunction, { out: "state_population" });
+
+// Query the results
+db.state_population.find();
+```
+
+This MapReduce operation will calculate the total population in each state and store the results in the `state_population` collection. You can then query the `state_population` collection to get the total population for each state.
+
+Make sure to replace `yourdb` with your actual database name and adjust the collection and field names as needed.

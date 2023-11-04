@@ -1,0 +1,72 @@
+ Using MapReduce in mongodb solve following queries on given below collection.
+db.createCollection("Paper")
+db.Paper.insertOne([{
+“id” : 0,
+“name” : “Leanne Flinn”,
+“email” : “leanne.flinn@unilogic.com”,
+“work” :”Unilogic” ,
+“age” :27
+“gender” :”Male”
+“Salary” :16660
+“hobbies”:”Acrobatics,Photography,Papier-Mache”
+}])
+1. Get the count of Males and Females
+2. Count the number of users in each hobby
+You can use MapReduce in MongoDB to solve the given queries. First, you need to create a JavaScript function for the map and reduce operations. Here's how you can accomplish the tasks:
+
+1. Get the count of Males and Females:
+
+Map Function:
+```javascript
+var mapFunction = function() {
+    emit(this.gender, 1);
+};
+
+Reduce Function:
+```javascript
+var reduceFunction = function(key, values) {
+    return Array.sum(values);
+};
+```
+
+Execute the MapReduce operation:
+
+```javascript
+db.collection.mapReduce(mapFunction, reduceFunction, { out: "gender_count" });
+
+// Query the results
+db.gender_count.find();
+```
+
+This will return the count of males and females.
+
+2. Count the number of users in each hobby:
+
+Map Function:
+```javascript
+var mapFunction = function() {
+    var hobbies = this.hobbies.split(",");
+    for (var i = 0; i < hobbies.length; i++) {
+        emit(hobbies[i], 1);
+    }
+};
+
+Reduce Function:
+```javascript
+var reduceFunction = function(key, values) {
+    return Array.sum(values);
+};
+```
+
+Execute the MapReduce operation:
+
+```javascript
+db.collection.mapReduce(mapFunction, reduceFunction, { out: "hobby_count" });
+
+// Query the results
+db.hobby_count.find();
+```
+
+This will return the count of users in each hobby.
+
+Ensure that you replace `collection` with the name of your actual collection in MongoDB and adjust the field names accordingly in the map and reduce functions.

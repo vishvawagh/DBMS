@@ -1,0 +1,147 @@
+Create Database DYPIT using MongoDB
+Create following Collections
+Teachers(Tname,dno,dname,experience,salary,date_of_joining )
+Students(Sname,roll_no,class)
+1. Display the department wise average salary
+2. display the no. Of employees working in each department
+3. Display the department wise total salary of departments having total salary greater than
+or equals to 50000/-
+4. Write the queries using the different operators like max, min. Etc.
+5. Create unique index on any field for above given collections
+6. Create compound index on any fields for above given collections
+7. Show all the indexes created in the database DYPIT
+8. Show all the indexes created in above collections.
+To create the `DYPIT` database, the `Teachers` and `Students` collections, and perform the requested operations, you can follow these steps:
+
+1. Create the `DYPIT` database:
+
+```javascript
+use DYPIT
+```
+
+2. Create the `Teachers` and `Students` collections and insert data:
+
+```javascript
+db.createCollection("Teachers");
+db.createCollection("Students");
+
+// Insert data into the Teachers collection
+db.Teachers.insertMany([
+   {
+      Tname: "John",
+      dno: 1,
+      dname: "Computer",
+      experience: 5,
+      salary: 30000,
+      date_of_joining: ISODate("2022-01-01")
+   },
+   {
+      Tname: "Alice",
+      dno: 2,
+      dname: "IT",
+      experience: 8,
+      salary: 28000,
+      date_of_joining: ISODate("2021-05-15")
+   },
+   {
+      Tname: "Praveen",
+      dno: 3,
+      dname: "E&TC",
+      experience: 6,
+      salary: 26000,
+      date_of_joining: ISODate("2022-02-10")
+   },
+   {
+      Tname: "Rajesh",
+      dno: 2,
+      dname: "IT",
+      experience: 7,
+      salary: 29000,
+      date_of_joining: ISODate("2020-12-05")
+   }
+]);
+
+// Insert data into the Students collection
+db.Students.insertMany([
+   {
+      Sname: "Alice",
+      roll_no: 1,
+      class: "A"
+   },
+   {
+      Sname: "Bob",
+      roll_no: 2,
+      class: "B"
+   },
+   {
+      Sname: "Charlie",
+      roll_no: 3,
+      class: "C"
+   }
+]);
+```
+
+3. Display the department-wise average salary:
+
+```javascript
+db.Teachers.aggregate([
+   { $group: { _id: "$dname", avg_salary: { $avg: "$salary" } } }
+]);
+```
+
+4. Display the number of employees working in each department:
+
+```javascript
+db.Teachers.aggregate([
+   { $group: { _id: "$dname", count: { $sum: 1 } } }
+]);
+```
+
+5. Display the department-wise total salary of departments having total salary greater than or equal to 50000:
+
+```javascript
+db.Teachers.aggregate([
+   { $group: { _id: "$dname", total_salary: { $sum: "$salary" } } },
+   { $match: { total_salary: { $gte: 50000 } } }
+]);
+```
+
+6. Write queries using different operators like `max`, `min`, etc.:
+
+```javascript
+// Example using $max operator to find the maximum salary in the Teachers collection
+db.Teachers.aggregate([
+   { $group: { _id: "$dname", max_salary: { $max: "$salary" } } }
+]);
+
+// Example using $min operator to find the minimum experience in the Teachers collection
+db.Teachers.aggregate([
+   { $group: { _id: "$dname", min_experience: { $min: "$experience" } } }
+]);
+```
+
+7. Create a unique index on a field (e.g., `Tname`) in the `Teachers` collection:
+
+```javascript
+db.Teachers.createIndex({ Tname: 1 }, { unique: true });
+```
+
+8. Create a compound index on fields (e.g., `dname` and `experience`) in the `Teachers` collection:
+
+```javascript
+db.Teachers.createIndex({ dname: 1, experience: 1 });
+```
+
+9. Show all the indexes created in the `DYPIT` database:
+
+```javascript
+db.getCollectionInfos({ type: "index" });
+```
+
+10. Show all the indexes created in the `Teachers` collection:
+
+```javascript
+db.Teachers.getIndexes();
+```
+
+These steps allow you to create the database, collections, perform various queries, create indexes, and inspect the indexes in both the database and the collection. Make sure to adjust the field names and data as needed.

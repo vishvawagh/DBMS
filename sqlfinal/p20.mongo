@@ -1,0 +1,156 @@
+1.Create Database DYPIT
+2. Create following Collections
+Teachers(Tname,dno,dname,experience,salary,date_of_joining )
+Students(Sname,roll_no,class)
+3. Find the information about two teachers
+4. Find the information about all teachers of computer department
+5. Find the information about all teachers of computer,IT,and e&TC department
+6. Find the information about all teachers of computer,IT,and E&TC department having salary
+greate than or equl to 25000/-
+7. Find the student information having roll_no = 25 or Sname=xyz
+8. Update the experience of teacher-praveen to 10years, if the entry is not available in database
+consider the entry as new entry.
+9. Update the deparment of all the teachers working in IT deprtment to COMP
+10. find the teachers name and their experience from teachers collection
+11. Using Save() method insert one entry in department collection
+13. Delete all the doccuments from teachers collection having IT dept.
+14. display with pretty() method, the first 5 documents in teachers collection in ascending order
+Certainly! Here's how you can create the `DYPIT` database in MongoDB and perform the requested operations:
+
+1. Create the `DYPIT` database:
+
+```javascript
+use DYPIT
+```
+
+2. Create the `Teachers` and `Students` collections:
+
+```javascript
+db.createCollection("Teachers")
+db.createCollection("Students")
+```
+
+3. Insert data into the `Teachers` and `Students` collections:
+
+```javascript
+// Insert data into the Teachers collection
+db.Teachers.insertMany([
+   {
+      Tname: "John",
+      dno: 1,
+      dname: "Computer",
+      experience: 5,
+      salary: 30000,
+      date_of_joining: ISODate("2022-01-01")
+   },
+   {
+      Tname: "Alice",
+      dno: 2,
+      dname: "IT",
+      experience: 8,
+      salary: 28000,
+      date_of_joining: ISODate("2021-05-15")
+   },
+   {
+      Tname: "Praveen",
+      dno: 3,
+      dname: "E&TC",
+      experience: 6,
+      salary: 26000,
+      date_of_joining: ISODate("2022-02-10")
+   },
+   {
+      Tname: "Rajesh",
+      dno: 2,
+      dname: "IT",
+      experience: 7,
+      salary: 29000,
+      date_of_joining: ISODate("2020-12-05")
+   }
+]);
+
+// Insert data into the Students collection
+db.Students.insertMany([
+   {
+      Sname: "Alice",
+      roll_no: 1,
+      class: "A"
+   },
+   {
+      Sname: "Bob",
+      roll_no: 2,
+      class: "B"
+   },
+   {
+      Sname: "Charlie",
+      roll_no: 3,
+      class: "C"
+   }
+]);
+```
+
+Now that you have the `DYPIT` database with the `Teachers` and `Students` collections, you can perform the requested queries:
+
+3. Find the information about two teachers:
+
+```javascript
+db.Teachers.find().limit(2);
+```
+
+4. Find the information about all teachers of the Computer department:
+
+```javascript
+db.Teachers.find({ dname: "Computer" });
+```
+
+5. Find the information about all teachers of the Computer, IT, and E&TC departments:
+
+```javascript
+db.Teachers.find({ dname: { $in: ["Computer", "IT", "E&TC"] });
+```
+
+6. Find the information about all teachers of Computer, IT, and E&TC departments having a salary greater than or equal to 25000:
+
+```javascript
+db.Teachers.find({ dname: { $in: ["Computer", "IT", "E&TC"] }, salary: { $gte: 25000 } });
+```
+
+7. Find student information with roll_no = 25 or Sname = "xyz":
+
+```javascript
+db.Students.find({ $or: [{ roll_no: 25 }, { Sname: "xyz" }] });
+```
+
+8. Update the experience of teacher Praveen to 10 years, or insert a new entry if it doesn't exist:
+
+```javascript
+db.Teachers.updateOne({ Tname: "Praveen" }, { $set: { experience: 10 } }, { upsert: true });
+```
+
+9. Update the department of all teachers working in IT to "COMP":
+
+```javascript
+db.Teachers.updateMany({ dname: "IT" }, { $set: { dname: "COMP" } });
+```
+
+10. Find teachers' names and their experience from the Teachers collection:
+
+```javascript
+db.Teachers.find({}, { Tname: 1, experience: 1, _id: 0 });
+```
+
+11. MongoDB does not have a `save()` method for collections.
+
+12. Delete all documents from the Teachers collection having the IT department:
+
+```javascript
+db.Teachers.deleteMany({ dname: "IT" });
+```
+
+13. Display the first 5 documents in the Teachers collection in ascending order using `pretty()`:
+
+```javascript
+db.Teachers.find().sort({ Tname: 1 }).limit(5).pretty();
+```
+
+Now you have the `DYPIT` database with the necessary collections and have performed the requested queries. Make sure to adjust the data and field names according to your actual data.

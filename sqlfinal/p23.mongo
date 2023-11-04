@@ -1,0 +1,59 @@
+Create index and fire queries with MongoDB
+1. Import zip.json.
+2. Create single field, composite and multikey indexes.
+3. Fire queries given below again and write your analysis.
+1. Display all cities having population above 1600.
+2. Display all cities in state “KS”.
+3. Display location of city "TIMKEN"
+To perform the tasks you've mentioned with MongoDB, you can follow these steps:
+
+1. Import the `zip.json` data into MongoDB using the `mongoimport` command. Make sure you have the `zip.json` file available:
+
+```bash
+mongoimport --db yourdb --collection zips --file path/to/zip.json
+```
+
+Replace `yourdb` with the name of your database and `path/to/zip.json` with the actual path to the `zip.json` file.
+
+2. Create single-field, composite, and multi-key indexes:
+
+```javascript
+// Single-field index on the "population" field
+db.zips.createIndex({ population: 1 });
+
+// Composite index on "state" and "city" fields
+db.zips.createIndex({ state: 1, city: 1 });
+
+// Multi-key index on "loc" field (assuming "loc" is an array)
+db.zips.createIndex({ loc: "2dsphere" });
+```
+
+Now, you have the necessary indexes created.
+
+3. Fire the requested queries and provide your analysis:
+
+1. Display all cities having a population above 1600:
+
+```javascript
+db.zips.find({ population: { $gt: 1600 } });
+```
+
+Analysis: This query retrieves all documents in the `zips` collection where the "population" field is greater than 1600. It will return cities with a population above 1600.
+
+2. Display all cities in the state "KS":
+
+```javascript
+db.zips.find({ state: "KS" });
+```
+
+Analysis: This query retrieves all documents in the `zips` collection where the "state" field is equal to "KS." It will return all cities in the state of Kansas.
+
+3. Display the location of the city "TIMKEN":
+
+```javascript
+db.zips.findOne({ city: "TIMKEN" }, { loc: 1 });
+```
+
+Analysis: This query uses `findOne()` to find a single document in the `zips` collection where the "city" field is "TIMKEN." It then projects only the "loc" field, which likely contains the geographical coordinates of the city "TIMKEN."
+
+Keep in mind that the accuracy and effectiveness of these queries depend on the structure of the data and the indexes you have created. The composite index on "state" and "city" can be useful for efficiently querying by state and city, while the 2dsphere index on "loc" is ideal for geospatial queries.
