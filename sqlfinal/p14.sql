@@ -10,86 +10,98 @@ account_master table records the current balance for an account, which is update
 deposits or withdrawals takes place. If the withdrawal attempted is more than the current balance
 held in the account. The user defined exception is raised, displaying an appropriate message.
 Write a PL/SQL block for above requirement using user defined exception handling.
-a) Here is a PL/SQL block that accomplishes the requirement to check a student's attendance and set their status based on the attendance percentage. We also handle exceptions for this scenario:
+a) PL/SQL block for handling attendance and status:
 
-```plsql
+```sql
+-- Create the STUD table for testing
+CREATE TABLE Stud (
+    Roll INT PRIMARY KEY,
+    Att NUMBER(5, 2),
+    Status CHAR(1)
+);
+
+-- Sample data for testing
+INSERT INTO Stud (Roll, Att, Status) VALUES (101, 80, 'ND');
+INSERT INTO Stud (Roll, Att, Status) VALUES (102, 60, 'D');
+
+-- PL/SQL block to check attendance and set status
 DECLARE
-   v_roll_number STUD.Roll%TYPE;
-   v_attendance STUD.Att%TYPE;
-   v_status STUD.Status%TYPE;
+    v_roll_no INT;
+    v_attendance NUMBER(5, 2);
 BEGIN
-   -- Accept roll number from the user
-   v_roll_number := &Enter_Roll_Number;
+    -- Input roll number from the user
+    v_roll_no := &roll_no;  -- Prompt for user input
 
-   -- Check attendance for the given roll number
-   SELECT Att, Status INTO v_attendance, v_status
-   FROM Stud
-   WHERE Roll = v_roll_number;
+    -- Check attendance for the given roll number
+    SELECT Att INTO v_attendance FROM Stud WHERE Roll = v_roll_no;
 
-   -- Check attendance percentage and set status accordingly
-   IF v_attendance < 75 THEN
-      DBMS_OUTPUT.PUT_LINE('Term not granted');
-      v_status := 'D';
-   ELSE
-      DBMS_OUTPUT.PUT_LINE('Term granted');
-      v_status := 'ND';
-   END IF;
-
-   -- Update status in the Stud table
-   UPDATE Stud
-   SET Status = v_status
-   WHERE Roll = v_roll_number;
-
-   COMMIT;
+    -- Check attendance and update status
+    IF v_attendance < 75 THEN
+        DBMS_OUTPUT.PUT_LINE('Term not granted');
+        -- Update status to "D"
+        UPDATE Stud SET Status = 'D' WHERE Roll = v_roll_no;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Term granted');
+        -- Update status to "ND"
+        UPDATE Stud SET Status = 'ND' WHERE Roll = v_roll_no;
+    END IF;
 EXCEPTION
-   WHEN NO_DATA_FOUND THEN
-      DBMS_OUTPUT.PUT_LINE('Roll number not found in the database.');
-   WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Roll number not found');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An error occurred');
 END;
 /
 ```
 
-This PL/SQL block will prompt the user to enter a roll number, check the attendance for that roll number, and update the status accordingly. It also handles exceptions for scenarios such as the roll number not being found in the database or any other errors.
+b) PL/SQL block for user-defined exception handling:
 
-b) Here is a PL/SQL block that handles user-defined exceptions for withdrawal from an account:
+```sql
+-- Create the account_master table for testing
+CREATE TABLE account_master (
+    account_id INT PRIMARY KEY,
+    current_balance NUMBER(10, 2)
+);
 
-```plsql
+-- Sample data for testing
+INSERT INTO account_master (account_id, current_balance) VALUES (1, 1000);
+INSERT INTO account_master (account_id, current_balance) VALUES (2, 500);
+
+-- PL/SQL block with user-defined exception
 DECLARE
-   v_account_number NUMBER := &Enter_Account_Number;
-   v_withdrawal_amount NUMBER := &Enter_Withdrawal_Amount;
-   v_current_balance NUMBER;
-
-   -- User-defined exception
-   insufficient_funds EXCEPTION;
-   PRAGMA EXCEPTION_INIT(insufficient_funds, -20001);
+    v_account_id INT := &account_id; -- Prompt for user input
+    v_withdrawal_amount NUMBER(10, 2) := &withdrawal_amount; -- Prompt for user input
+    v_current_balance NUMBER(10, 2);
+    
+    -- User-defined exception
+    insufficient_funds EXCEPTION;
+    PRAGMA EXCEPTION_INIT(insufficient_funds, -20000);
 
 BEGIN
-   -- Get the current balance for the account
-   SELECT balance INTO v_current_balance
-   FROM account_master
-   WHERE account_number = v_account_number;
+    -- Get the current balance for the account
+    SELECT current_balance INTO v_current_balance FROM account_master WHERE account_id = v_account_id;
 
-   -- Check if the withdrawal amount is greater than the current balance
-   IF v_withdrawal_amount > v_current_balance THEN
-      RAISE insufficient_funds;
-   ELSE
-      -- Update the balance after successful withdrawal
-      UPDATE account_master
-      SET balance = v_current_balance - v_withdrawal_amount
-      WHERE account_number = v_account_number;
-      COMMIT;
-      DBMS_OUTPUT.PUT_LINE('Withdrawal successful. New balance: ' || (v_current_balance - v_withdrawal_amount));
-   END IF;
+    -- Check if withdrawal amount exceeds the current balance
+    IF v_withdrawal_amount > v_current_balance THEN
+        -- Raise the user-defined exception
+        RAISE insufficient_funds;
+    ELSE
+        -- Perform the withdrawal
+        v_current_balance := v_current_balance - v_withdrawal_amount;
+        -- Update the current balance
+        UPDATE account_master SET current_balance = v_current_balance WHERE account_id = v_account_id;
+        DBMS_OUTPUT.PUT_LINE('Withdrawal successful. New balance: ' || v_current_balance);
+    END IF;
+
 EXCEPTION
-   WHEN insufficient_funds THEN
-      DBMS_OUTPUT.PUT_LINE('Insufficient funds for withdrawal.');
-   WHEN NO_DATA_FOUND THEN
-      DBMS_OUTPUT.PUT_LINE('Account number not found in the database.');
-   WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+    WHEN insufficient_funds THEN
+        DBMS_OUTPUT.PUT_LINE('Insufficient funds for withdrawal');
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Account not found');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An error occurred');
 END;
 /
 ```
 
-In this PL/SQL block, a user-defined exception named `insufficient_funds` is raised if the withdrawal amount is greater than the current balance. It also handles other exceptions like account not found and any other errors that might occur during execution.
+In the code for part b, we have created a user-defined exception named `insufficient_funds` and used the `RAISE` statement to raise this exception when a withdrawal amount exceeds the current balance. This allows you to handle specific cases with customized error messages.
