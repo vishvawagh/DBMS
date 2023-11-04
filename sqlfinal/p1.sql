@@ -14,6 +14,23 @@ Solve Queries by SQL
 8. List total salary paid to each department
 9. List details of employee working in ‘Dev’ department
 10. Update salary of all employees in deptno 10 by 5 %.'''
+-- Insert data into the "Dept" table
+INSERT INTO Dept (deptno, deptname, location)
+VALUES
+  (10, 'HR', 'New York'),
+  (20, 'Sales', 'Chicago'),
+  (30, 'Development', 'San Francisco');
+
+-- Insert data into the "Emp" table
+INSERT INTO Emp (eno, ename, job, hiredate, salary, commission, deptno)
+VALUES
+  (1, 'John', 'Manager', TO_DATE('1980-12-17', 'YYYY-MM-DD'), 5000, NULL, 10),
+  (2, 'Anna', 'Manager', TO_DATE('1981-02-20', 'YYYY-MM-DD'), 5500, NULL, 20),
+  (3, 'Mike', 'Salesman', TO_DATE('1981-05-10', 'YYYY-MM-DD'), 3000, 500, 20),
+  (4, 'Isabel', 'Salesman', TO_DATE('1982-03-15', 'YYYY-MM-DD'), 3200, 200, 20),
+  (5, 'Robert', 'Clerk', TO_DATE('1980-09-25', 'YYYY-MM-DD'), 2000, NULL, 10),
+  (6, 'Linda', 'Analyst', TO_DATE('1981-09-30', 'YYYY-MM-DD'), 4000, NULL, 30),
+  (7, 'Eric', 'Clerk', TO_DATE('1982-11-05', 'YYYY-MM-DD'), 2200, NULL, 10);
 
 1. **Create the `Emp` and `Dept` tables:**
 
