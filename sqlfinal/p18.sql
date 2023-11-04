@@ -9,93 +9,91 @@ inserted is less than Rs. 50,000/- II) Trigger action should be initiated when s
 updated for value less than Rs. 50,000/- Action should be rejection of update or Insert
 operation by displaying appropriate error message. Also the new values expected to be inserted
 will be stored in new table Tracking(e_no, salary).
-a) Here's how you can create an update trigger and a delete trigger on the `clientmstr` table to keep track of the records that are being updated or deleted and add the old values to the `audit_trade` table:
+a) Implementation of update and delete triggers with separate row and statement triggers to track changes in the `clientmstr` table and add old values to the `audit_trade` table:
 
-1. Using a Row-Level Update Trigger:
 ```sql
-CREATE OR REPLACE TRIGGER update_audit_trigger
-BEFORE UPDATE ON clientmstr
+-- Create the clientmstr and audit_trade tables for testing
+CREATE TABLE clientmstr (
+    client_id INT PRIMARY KEY,
+    client_name VARCHAR(100),
+    client_status VARCHAR(1)
+);
+
+CREATE TABLE audit_trade (
+    client_id INT,
+    action_type VARCHAR(10),
+    old_client_name VARCHAR(100),
+    old_client_status VARCHAR(1),
+    audit_timestamp TIMESTAMP
+);
+
+-- Sample data for testing
+INSERT INTO clientmstr (client_id, client_name, client_status) VALUES (1, 'Client A', 'A');
+INSERT INTO clientmstr (client_id, client_name, client_status) VALUES (2, 'Client B', 'I');
+INSERT INTO clientmstr (client_id, client_name, client_status) VALUES (3, 'Client C', 'A');
+
+-- Update trigger to track changes and add old values to audit_trade
+CREATE OR REPLACE TRIGGER update_clientmstr_trigger
+AFTER UPDATE ON clientmstr
 FOR EACH ROW
 BEGIN
-   IF :OLD.status <> :NEW.status THEN
-      -- Add the old value to the audit_trade table
-      INSERT INTO audit_trade (client_id, old_status, update_time)
-      VALUES (:OLD.client_id, :OLD.status, SYSTIMESTAMP);
-   END IF;
+    IF :OLD.client_name != :NEW.client_name OR :OLD.client_status != :NEW.client_status THEN
+        INSERT INTO audit_trade (client_id, action_type, old_client_name, old_client_status, audit_timestamp)
+        VALUES (:OLD.client_id, 'UPDATE', :OLD.client_name, :OLD.client_status, SYSTIMESTAMP);
+    END IF;
 END;
 /
 
-CREATE OR REPLACE TRIGGER delete_audit_trigger
+-- Delete trigger to track changes and add old values to audit_trade
+CREATE OR REPLACE TRIGGER delete_clientmstr_trigger
 BEFORE DELETE ON clientmstr
 FOR EACH ROW
 BEGIN
-   -- Add the old value to the audit_trade table
-   INSERT INTO audit_trade (client_id, old_status, update_time)
-   VALUES (:OLD.client_id, :OLD.status, SYSTIMESTAMP);
+    INSERT INTO audit_trade (client_id, action_type, old_client_name, old_client_status, audit_timestamp)
+    VALUES (:OLD.client_id, 'DELETE', :OLD.client_name, :OLD.client_status, SYSTIMESTAMP);
 END;
 /
 ```
 
-In this trigger, the `update_audit_trigger` will fire before each row is updated, and if the `status` field is changed, it will add the old status and the timestamp of the update to the `audit_trade` table. The `delete_audit_trigger` will fire before each row is deleted and add the old status and timestamp to the `audit_trade` table.
+In this implementation, the `update_clientmstr_trigger` and `delete_clientmstr_trigger` triggers track changes in the `clientmstr` table and add old values to the `audit_trade` table when updates or deletions occur.
 
-2. Using a Statement-Level Update Trigger:
-```sql
-CREATE OR REPLACE TRIGGER update_audit_trigger
-AFTER UPDATE ON clientmstr
-DECLARE
-   v_client_id clientmstr.client_id%TYPE;
-BEGIN
-   -- Use the FOR EACH ROW to check which rows were updated
-   FOR updated_row IN (SELECT client_id FROM clientmstr WHERE status <> :NEW.status) LOOP
-      v_client_id := updated_row.client_id;
-      -- Add the old value to the audit_trade table
-      INSERT INTO audit_trade (client_id, old_status, update_time)
-      VALUES (v_client_id, (SELECT status FROM clientmstr WHERE client_id = v_client_id), SYSTIMESTAMP);
-   END LOOP;
-END;
-/
-
-CREATE OR REPLACE TRIGGER delete_audit_trigger
-AFTER DELETE ON clientmstr
-BEGIN
-   -- Use the FOR EACH ROW to check which rows were deleted
-   FOR deleted_row IN (SELECT client_id FROM clientmstr WHERE client_id = :OLD.client_id) LOOP
-      -- Add the old value to the audit_trade table
-      INSERT INTO audit_trade (client_id, old_status, update_time)
-      VALUES (deleted_row.client_id, :OLD.status, SYSTIMESTAMP);
-   END LOOP;
-END;
-/
-```
-
-In this trigger, the `update_audit_trigger` will fire after the update statement is executed, and it will use a FOR EACH ROW loop to identify which rows were updated and add the old status and timestamp to the `audit_trade` table. The `delete_audit_trigger` will fire after the delete statement and add the old status and timestamp for the deleted row.
-
-b) Here's a before trigger that prevents inserting or updating a salary less than Rs. 50,000 in the `Emp` table and stores the new values in the `Tracking` table:
+b) Implementation of a before trigger to reject insert or update operations with salary less than Rs. 50,000 and store new values in the `Tracking` table:
 
 ```sql
+-- Create the Emp and Tracking tables for testing
+CREATE TABLE Emp (
+    e_no INT PRIMARY KEY,
+    e_name VARCHAR(100),
+    salary NUMBER(10, 2)
+);
+
+CREATE TABLE Tracking (
+    e_no INT PRIMARY KEY,
+    salary NUMBER(10, 2)
+);
+
+-- Sample data for testing
+INSERT INTO Emp (e_no, e_name, salary) VALUES (1, 'Employee A', 55000);
+INSERT INTO Emp (e_no, e_name, salary) VALUES (2, 'Employee B', 48000);
+
+-- Before trigger to reject insert or update with salary less than Rs. 50,000 and store new values in Tracking
 CREATE OR REPLACE TRIGGER salary_check_trigger
-BEFORE INSERT OR UPDATE OF salary ON Emp
+BEFORE INSERT OR UPDATE ON Emp
 FOR EACH ROW
-DECLARE
-   v_error_message VARCHAR2(200);
 BEGIN
-   IF :NEW.salary < 50000 THEN
-      v_error_message := 'Salary must be at least Rs. 50,000.';
-      RAISE_APPLICATION_ERROR(-20001, v_error_message);
-   END IF;
-
-   IF INSERTING THEN
-      -- Insert the new values into the Tracking table
-      INSERT INTO Tracking (e_no, salary)
-      VALUES (:NEW.e_no, :NEW.salary);
-   ELSIF UPDATING THEN
-      -- Update the new values in the Tracking table
-      UPDATE Tracking
-      SET salary = :NEW.salary
-      WHERE e_no = :NEW.e_no;
-   END IF;
+    IF :NEW.salary < 50000 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Salary cannot be less than Rs. 50,000');
+    ELSE
+        IF INSERTING THEN
+            INSERT INTO Tracking (e_no, salary)
+            VALUES (:NEW.e_no, :NEW.salary);
+        ELSIF UPDATING THEN
+            INSERT INTO Tracking (e_no, salary)
+            VALUES (:NEW.e_no, :NEW.salary);
+        END IF;
+    END IF;
 END;
 /
 ```
 
-In this trigger, we use a `BEFORE INSERT OR UPDATE` trigger to check the salary value before it is inserted or updated in the `Emp` table. If the salary is less than Rs. 50,000, an error message is raised, preventing the operation. Additionally, for insertions, the new values are stored in the `Tracking` table, and for updates, the values are updated in the `Tracking` table.
+In this implementation, the `salary_check_trigger` before trigger checks if the salary is less than Rs. 50,000 and raises an error if it is. It also stores the new values in the `Tracking` table for insert and update operations.
