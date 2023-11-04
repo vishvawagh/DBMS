@@ -9,95 +9,114 @@ data in the first table already exist in the second table then that data should 
 c)Write the PL/SQL block for following requirements using parameterized Cursor: Consider
 table EMP(e_no, d_no, Salary), department wise average salary should be inserted into new
 table dept_salary(d_no, Avg_sal)
-a) Here is a PL/SQL block that uses an implicit cursor to activate accounts that were previously marked as inactive due to no transactions in the last 365 days. It also displays an approximate message based on the number of rows affected by the update using `%ROWCOUNT`:
+a) PL/SQL block using an implicit cursor to activate accounts and display a message:
 
-```plsql
+```sql
+-- Create the account table for testing
+CREATE TABLE account (
+    account_id INT PRIMARY KEY,
+    account_status VARCHAR(1),
+    last_transaction_date DATE
+);
+
+-- Sample data for testing
+INSERT INTO account (account_id, account_status, last_transaction_date) VALUES (1, 'I', TO_DATE('2022-01-01', 'YYYY-MM-DD'));
+INSERT INTO account (account_id, account_status, last_transaction_date) VALUES (2, 'I', TO_DATE('2023-02-15', 'YYYY-MM-DD'));
+INSERT INTO account (account_id, account_status, last_transaction_date) VALUES (3, 'A', TO_DATE('2023-10-10', 'YYYY-MM-DD'));
+
+-- PL/SQL block to activate inactive accounts
 DECLARE
-   v_rows_affected NUMBER := 0;
+    v_rowcount NUMBER;
 BEGIN
-   -- Update the status of inactive accounts to 'Active'
-   UPDATE account_table
-   SET status = 'Active'
-   WHERE last_transaction_date <= SYSDATE - 365;
+    -- Update the status of inactive accounts
+    UPDATE account
+    SET account_status = 'A'
+    WHERE account_status = 'I' AND last_transaction_date < SYSDATE - 365;
 
-   -- Get the number of rows affected by the update
-   v_rows_affected := SQL%ROWCOUNT;
+    -- Get the number of rows affected by the update
+    v_rowcount := SQL%ROWCOUNT;
 
-   -- Display an approximate message based on the number of rows affected
-   IF v_rows_affected = 0 THEN
-      DBMS_OUTPUT.PUT_LINE('No accounts were activated.');
-   ELSE
-      DBMS_OUTPUT.PUT_LINE(v_rows_affected || ' accounts have been activated.');
-   END IF;
-
-   COMMIT;
+    IF v_rowcount > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Approximately ' || v_rowcount || ' account(s) activated.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('No accounts activated.');
+    END IF;
 END;
 /
 ```
 
-In this PL/SQL block, we update the status of accounts that meet the criteria and then use `SQL%ROWCOUNT` to determine how many rows were affected by the update. We display a message based on the number of rows updated.
+b) PL/SQL block using a parameterized cursor to merge data from `N_RollCall` into `O_RollCall`:
 
-b) To merge data from the newly created table `N_RollCall` with the data available in the table `O_RollCall` while skipping data that already exists in the second table, you can use a parameterized cursor. Here's a PL/SQL block for this:
+```sql
+-- Create the N_RollCall and O_RollCall tables for testing
+CREATE TABLE N_RollCall (
+    roll_number INT PRIMARY KEY,
+    student_name VARCHAR(100)
+);
 
-```plsql
+CREATE TABLE O_RollCall (
+    roll_number INT PRIMARY KEY,
+    student_name VARCHAR(100)
+);
+
+-- Sample data for testing
+INSERT INTO O_RollCall (roll_number, student_name) VALUES (1, 'Alice');
+INSERT INTO O_RollCall (roll_number, student_name) VALUES (2, 'Bob');
+INSERT INTO N_RollCall (roll_number, student_name) VALUES (2, 'Bob');
+INSERT INTO N_RollCall (roll_number, student_name) VALUES (3, 'Charlie');
+
+-- PL/SQL block to merge data from N_RollCall into O_RollCall
 DECLARE
-   CURSOR merge_cursor IS
-      SELECT *
-      FROM N_RollCall;
-
-   v_n_roll_number N_RollCall.roll_number%TYPE;
+    CURSOR merge_cursor IS
+        SELECT roll_number, student_name
+        FROM N_RollCall
+        WHERE roll_number NOT IN (SELECT roll_number FROM O_RollCall);
 BEGIN
-   FOR n_rec IN merge_cursor LOOP
-      v_n_roll_number := n_rec.roll_number;
+    FOR merge_rec IN merge_cursor LOOP
+        INSERT INTO O_RollCall (roll_number, student_name)
+        VALUES (merge_rec.roll_number, merge_rec.student_name);
+    END LOOP;
 
-      -- Check if the data already exists in O_RollCall
-      SELECT COUNT(*) INTO v_exists
-      FROM O_RollCall
-      WHERE roll_number = v_n_roll_number;
-
-      -- Insert the data if it doesn't already exist
-      IF v_exists = 0 THEN
-         INSERT INTO O_RollCall (roll_number, other_columns)
-         VALUES (v_n_roll_number, n_rec.other_columns);
-      END IF;
-   END LOOP;
-
-   COMMIT;
-   DBMS_OUTPUT.PUT_LINE('Data has been merged from N_RollCall to O_RollCall.');
+    DBMS_OUTPUT.PUT_LINE('Data merged into O_RollCall.');
 END;
 /
 ```
 
-In this PL/SQL block, we use a parameterized cursor to fetch data from `N_RollCall`, and for each record, we check if the data already exists in `O_RollCall`. If not, we insert it into `O_RollCall`. This block effectively skips data that already exists in the second table.
+c) PL/SQL block using a parameterized cursor to calculate department-wise average salary and insert it into a new table `dept_salary`:
 
-c) To insert department-wise average salary into a new table `dept_salary`, you can use a parameterized cursor. Here's a PL/SQL block for this:
+```sql
+-- Create the EMP table and dept_salary table for testing
+CREATE TABLE EMP (
+    e_no INT PRIMARY KEY,
+    d_no INT,
+    Salary NUMBER(10, 2)
+);
 
-```plsql
+CREATE TABLE dept_salary (
+    d_no INT PRIMARY KEY,
+    Avg_sal NUMBER(10, 2)
+);
+
+-- Sample data for testing
+INSERT INTO EMP (e_no, d_no, Salary) VALUES (1, 101, 50000);
+INSERT INTO EMP (e_no, d_no, Salary) VALUES (2, 101, 55000);
+INSERT INTO EMP (e_no, d_no, Salary) VALUES (3, 102, 48000);
+
+-- PL/SQL block to calculate department-wise average salary and insert into dept_salary
 DECLARE
-   CURSOR dept_cursor IS
-      SELECT DISTINCT d_no
-      FROM EMP;
-
-   v_d_no EMP.d_no%TYPE;
-   v_avg_salary NUMBER;
+    CURSOR dept_cursor IS
+        SELECT d_no, AVG(Salary) AS avg_salary
+        FROM EMP
+        GROUP BY d_no;
 BEGIN
-   FOR dept_rec IN dept_cursor LOOP
-      v_d_no := dept_rec.d_no;
+    FOR dept_rec IN dept_cursor LOOP
+        INSERT INTO dept_salary (d_no, Avg_sal)
+        VALUES (dept_rec.d_no, dept_rec.avg_salary);
+    END LOOP;
 
-      -- Calculate the average salary for the department
-      SELECT AVG(Salary) INTO v_avg_salary
-      FROM EMP
-      WHERE d_no = v_d_no;
-
-      -- Insert the department and its average salary into dept_salary
-      INSERT INTO dept_salary (d_no, Avg_salary)
-      VALUES (v_d_no, v_avg_salary);
-   END LOOP;
-
-   COMMIT;
-   DBMS_OUTPUT.PUT_LINE('Average salary per department has been inserted into dept_salary.');
+    DBMS_OUTPUT.PUT_LINE('Average salary by department calculated and inserted into dept_salary.');
 END;
 /
 ```
 
-In this PL/SQL block, we use a parameterized cursor to fetch distinct department numbers, calculate the average salary for each department, and then insert the department and its average salary into the `dept_salary` table.
+In these PL/SQL blocks, we use parameterized cursors to handle the specific tasks of activating accounts, merging data, and calculating department-wise average salaries. The results are displayed using the `DBMS_OUTPUT` package.
