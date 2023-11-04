@@ -16,19 +16,26 @@ Solve following queries by SQL
 9. Create index on one of the field and show is performance in query.
 10. Create one view on above database and query it.
 '''
-Certainly! Here's how you can create the tables and SQL queries for each of the specified questions:
+To solve these queries, we'll start by creating the tables, inserting sample data, and then providing the SQL queries based on the given table structure. Here's how to create the tables, insert sample data, and execute the queries:
 
-1. **Create Tables:**
+1. Create the tables and insert sample data:
 
 ```sql
--- Create the 'Hotel' table
+-- Create the Hotel table
 CREATE TABLE Hotel (
     HotelNo INT PRIMARY KEY,
-    Name VARCHAR(50),
+    Name VARCHAR(100),
     City VARCHAR(50)
 );
 
--- Create the 'Room' table
+-- Insert sample data into the Hotel table
+INSERT INTO Hotel (HotelNo, Name, City)
+VALUES
+    (1, 'Grosvenor Hotel', 'London'),
+    (2, 'Park Plaza', 'New York'),
+    (3, 'Golden Gate Inn', 'San Francisco');
+
+-- Create the Room table
 CREATE TABLE Room (
     RoomNo INT PRIMARY KEY,
     HotelNo INT,
@@ -36,7 +43,17 @@ CREATE TABLE Room (
     Price DECIMAL(10, 2)
 );
 
--- Create the 'Booking' table
+-- Insert sample data into the Room table
+INSERT INTO Room (RoomNo, HotelNo, Type, Price)
+VALUES
+    (101, 1, 'Single', 150.00),
+    (102, 1, 'Double', 200.00),
+    (201, 2, 'Single', 180.00),
+    (202, 2, 'Double', 250.00),
+    (301, 3, 'Single', 120.00),
+    (302, 3, 'Double', 190.00);
+
+-- Create the Booking table
 CREATE TABLE Booking (
     HotelNo INT,
     GuestNo INT,
@@ -45,108 +62,127 @@ CREATE TABLE Booking (
     RoomNo INT
 );
 
--- Create the 'Guest' table
+-- Insert sample data into the Booking table
+INSERT INTO Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo)
+VALUES
+    (1, 101, '2023-11-01', '2023-11-05', 101),
+    (1, 102, '2023-11-02', '2023-11-06', 102),
+    (2, 201, '2023-11-03', '2023-11-07', 201),
+    (2, 202, '2023-11-04', '2023-11-08', 202),
+    (3, 301, '2023-11-05', '2023-11-09', 301),
+    (3, 302, '2023-11-06', '2023-11-10', 302);
+
+-- Create the Guest table
 CREATE TABLE Guest (
     GuestNo INT PRIMARY KEY,
-    GuestName VARCHAR(50),
+    GuestName VARCHAR(100),
     GuestAddress VARCHAR(100)
 );
+
+-- Insert sample data into the Guest table
+INSERT INTO Guest (GuestNo, GuestName, GuestAddress)
+VALUES
+    (101, 'John Smith', '123 Main St, London'),
+    (102, 'Alice Johnson', '456 Elm St, London'),
+    (201, 'Bob Davis', '789 Oak St, New York'),
+    (202, 'Eva Wilson', '101 Pine St, New York'),
+    (301, 'Chris Robinson', '567 Market St, San Francisco'),
+    (302, 'Mia Baker', '789 Oak St, San Francisco');
 ```
 
-2. **Queries by number:**
+Now that you've created the tables and inserted sample data, you can proceed with the SQL queries:
 
-Query 1: List full details of all hotels.
+1. List full details of all hotels:
+
 ```sql
 SELECT *
 FROM Hotel;
 ```
 
-Query 2: List full details of all hotels in London.
+2. List full details of all hotels in London:
+
 ```sql
 SELECT *
 FROM Hotel
 WHERE City = 'London';
 ```
 
-Query 3: List all guests currently staying at the Grosvenor Hotel.
+3. List all guests currently staying at the Grosvenor Hotel:
+
 ```sql
 SELECT G.GuestName
-FROM Guest AS G
-INNER JOIN Booking AS B ON G.GuestNo = B.GuestNo
-WHERE B.HotelNo = (SELECT HotelNo FROM Hotel WHERE Name = 'Grosvenor Hotel');
+FROM Guest G
+JOIN Booking B ON G.GuestNo = B.GuestNo
+WHERE B.HotelNo = 1;
 ```
 
-Query 4: List the names and addresses of all guests in London, alphabetically ordered by name.
+4. List the names and addresses of all guests in London, alphabetically ordered by name:
+
 ```sql
 SELECT GuestName, GuestAddress
 FROM Guest
-WHERE GuestNo IN (
-    SELECT GuestNo
-    FROM Booking
-    WHERE HotelNo IN (
-        SELECT HotelNo
-        FROM Hotel
-        WHERE City = 'London'
-    )
-)
+WHERE GuestAddress LIKE '%London%'
 ORDER BY GuestName;
 ```
 
-Query 5: List the bookings for which no `DateTo` has been specified.
+5. List the bookings for which no `DateTo` has been specified:
+
 ```sql
 SELECT *
 FROM Booking
 WHERE DateTo IS NULL;
 ```
 
-Query 6: How many hotels are there?
+6. How many hotels are there?
+
 ```sql
-SELECT COUNT(*) AS TotalHotels
+SELECT COUNT(*) AS HotelCount
 FROM Hotel;
 ```
 
-Query 7: List the rooms that are currently unoccupied at the Grosvenor Hotel.
+7. List the rooms that are currently unoccupied at the Grosvenor Hotel:
+
 ```sql
-SELECT R.RoomNo, R.Type
-FROM Room AS R
-WHERE R.HotelNo = (SELECT HotelNo FROM Hotel WHERE Name = 'Grosvenor Hotel')
-AND R.RoomNo NOT IN (SELECT RoomNo FROM Booking WHERE HotelNo = R.HotelNo);
+SELECT R.RoomNo
+FROM Room R
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo
+WHERE R.HotelNo = 1 AND B.RoomNo IS NULL;
 ```
 
-Query 8: What is the lost income from unoccupied rooms at each hotel today?
+8. What is the lost income from unoccupied rooms at each hotel today?
+
 ```sql
-SELECT H.Name AS HotelName, SUM(R.Price) AS LostIncomeToday
-FROM Hotel AS H
-INNER JOIN Room AS R ON H.HotelNo = R.HotelNo
-WHERE R.RoomNo NOT IN (SELECT RoomNo FROM Booking WHERE HotelNo = H.HotelNo AND DateFrom = CURDATE())
-GROUP BY H.HotelNo;
+SELECT H.Name AS HotelName, ISNULL(SUM(R.Price), 0) AS LostIncome
+FROM Hotel H
+LEFT JOIN Room R ON H.HotelNo = R.HotelNo
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo
+WHERE B.DateFrom = '2023-11-04' AND B.DateTo IS NULL
+GROUP BY H.Name;
 ```
 
-Query 9: Create an index on one of the fields and show its performance in a query.
-To create an index, you can use a statement like this:
+9. Create an index on one of the fields:
+
+You can create an index on the `Hotel.City` field, for example:
 
 ```sql
-CREATE INDEX idx_hotel_city ON Hotel(City);
+CREATE INDEX IX_City ON Hotel (City);
 ```
 
-After creating the index, queries that involve filtering or ordering by the `City` column in the `Hotel` table will perform faster.
-
-Query 10: Create one view on the above database and query it.
-To create a view, you can use a statement like this:
+10. Create one view on the above database and query it:
 
 ```sql
-CREATE VIEW HotelBookingSummary AS
-SELECT H.Name AS HotelName, B.DateFrom, B.DateTo, R.Type, R.Price
-FROM Hotel AS H
-INNER JOIN Booking AS B ON H.HotelNo = B.HotelNo
-INNER JOIN Room AS R ON B.RoomNo = R.RoomNo;
-```
+-- Create a view that combines information from Hotel, Room, Booking, and Guest
+CREATE VIEW HotelInfo AS
+SELECT H.HotelNo, H.Name AS HotelName, H.City, R.RoomNo, R.Type, R.Price,
+       B.GuestNo, B.DateFrom, B.DateTo, G.GuestName, G.GuestAddress
+FROM Hotel H
+JOIN Room R ON H.HotelNo = R.HotelNo
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo
+LEFT JOIN Guest G ON B.GuestNo = G.GuestNo;
 
-Once you've created the view, you can query it like a table:
-
-```sql
+-- Query the view
 SELECT *
-FROM HotelBookingSummary;
+FROM HotelInfo;
 ```
 
-These SQL queries are based on the provided tables and should help you with the specified questions. Make sure to adjust table and column names if they differ from the examples provided.
+You've now created tables, inserted data, and executed the SQL queries for the given scenarios, including creating a view and querying it.
