@@ -19,68 +19,108 @@ Solve following queries by SQL
 9. List the number of rooms in each hotel in London.
 10. Create one view on above database and query it. do same for these
 '''
-1. **Create Tables:**
+To solve these queries, you can create the tables, insert sample data, and then provide the SQL queries based on the given table structure. Here's how to create the tables, insert data, and execute the queries:
+
+1. Create the tables and insert sample data:
 
 ```sql
--- Create the 'Hotel' table
+-- Create the Hotel table
 CREATE TABLE Hotel (
     HotelNo INT PRIMARY KEY,
-    Name VARCHAR(50),
+    Name VARCHAR(100),
     City VARCHAR(50)
 );
 
--- Create the 'Room' table
+-- Insert sample data into the Hotel table
+INSERT INTO Hotel (HotelNo, Name, City)
+VALUES
+    (1, 'Grosvenor Hotel', 'London'),
+    (2, 'Park Plaza', 'New York'),
+    (3, 'Golden Gate Inn', 'San Francisco');
+
+-- Create the Room table
 CREATE TABLE Room (
     RoomNo INT,
     HotelNo INT,
     Type VARCHAR(50),
     Price DECIMAL(10, 2),
-    PRIMARY KEY (HotelNo, RoomNo),
-    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo)
+    PRIMARY KEY (HotelNo, RoomNo)
 );
 
--- Create the 'Booking' table
+-- Insert sample data into the Room table
+INSERT INTO Room (RoomNo, HotelNo, Type, Price)
+VALUES
+    (101, 1, 'Single', 150.00),
+    (102, 1, 'Double', 200.00),
+    (201, 2, 'Single', 180.00),
+    (202, 2, 'Double', 250.00),
+    (301, 3, 'Single', 120.00),
+    (302, 3, 'Double', 190.00);
+
+-- Create the Booking table
 CREATE TABLE Booking (
     HotelNo INT,
     GuestNo INT,
     DateFrom DATE,
     DateTo DATE,
     RoomNo INT,
-    PRIMARY KEY (HotelNo, GuestNo, DateFrom),
-    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo),
-    FOREIGN KEY (RoomNo, HotelNo) REFERENCES Room(RoomNo, HotelNo)
+    PRIMARY KEY (HotelNo, GuestNo, DateFrom)
 );
 
--- Create the 'Guest' table
+-- Insert sample data into the Booking table
+INSERT INTO Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo)
+VALUES
+    (1, 101, '2023-11-01', '2023-11-05', 101),
+    (1, 102, '2023-11-02', '2023-11-06', 102),
+    (2, 201, '2023-11-03', '2023-11-07', 201),
+    (2, 202, '2023-11-04', '2023-11-08', 202),
+    (3, 301, '2023-11-05', '2023-11-09', 301),
+    (3, 302, '2023-11-06', '2023-11-10', 302);
+
+-- Create the Guest table
 CREATE TABLE Guest (
     GuestNo INT PRIMARY KEY,
-    GuestName VARCHAR(50),
+    GuestName VARCHAR(100),
     GuestAddress VARCHAR(100)
 );
+
+-- Insert sample data into the Guest table
+INSERT INTO Guest (GuestNo, GuestName, GuestAddress)
+VALUES
+    (101, 'John Smith', '123 Main St, London'),
+    (102, 'Alice Johnson', '456 Elm St, London'),
+    (201, 'Bob Davis', '789 Oak St, New York'),
+    (202, 'Eva Wilson', '101 Pine St, New York'),
+    (301, 'Chris Robinson', '567 Market St, San Francisco'),
+    (302, 'Mia Baker', '789 Oak St, San Francisco');
 ```
 
-2. **Queries by number:**
+Now that you've created the tables and inserted sample data, you can proceed with the SQL queries:
 
-Query 1: List full details of all hotels.
+1. List full details of all hotels:
+
 ```sql
 SELECT *
 FROM Hotel;
 ```
 
-Query 2: How many hotels are there?
+2. How many hotels are there?
+
 ```sql
-SELECT COUNT(*) AS TotalHotels
+SELECT COUNT(*) AS HotelCount
 FROM Hotel;
 ```
 
-Query 3: List the price and type of all rooms at the Grosvenor Hotel.
+3. List the price and type of all rooms at the Grosvenor Hotel:
+
 ```sql
-SELECT Room.Price, Room.Type
+SELECT Type, Price
 FROM Room
-WHERE Room.HotelNo = (SELECT HotelNo FROM Hotel WHERE Name = 'Grosvenor Hotel');
+WHERE HotelNo = 1;
 ```
 
-Query 4: List the number of rooms in each hotel.
+4. List the number of rooms in each hotel:
+
 ```sql
 SELECT Hotel.Name, COUNT(Room.RoomNo) AS NumberOfRooms
 FROM Hotel
@@ -88,58 +128,60 @@ LEFT JOIN Room ON Hotel.HotelNo = Room.HotelNo
 GROUP BY Hotel.Name;
 ```
 
-Query 5: Update the price of all rooms by 5%.
+5. Update the price of all rooms by 5%:
+
 ```sql
 UPDATE Room
 SET Price = Price * 1.05;
 ```
 
-Query 6: List full details of all hotels in London.
+6. List full details of all hotels in London:
+
 ```sql
 SELECT *
 FROM Hotel
 WHERE City = 'London';
 ```
 
-Query 7: What is the average price of a room?
+7. What is the average price of a room?
+
 ```sql
-SELECT AVG(Price) AS AverageRoomPrice
+SELECT AVG(Price) AS AveragePrice
 FROM Room;
 ```
 
-Query 8: List all guests currently staying at the Grosvenor Hotel.
-```sql
-SELECT Guest.GuestName
-FROM Guest
-INNER JOIN Booking ON Guest.GuestNo = Booking.GuestNo
-WHERE Booking.HotelNo = (SELECT HotelNo FROM Hotel WHERE Name = 'Grosvenor Hotel');
-```
-
-Query 9: List the number of rooms in each hotel in London.
-```sql
-SELECT Hotel.Name, COUNT(Room.RoomNo) AS NumberOfRooms
-FROM Hotel
-LEFT JOIN Room ON Hotel.HotelNo = Room.HotelNo
-WHERE Hotel.City = 'London'
-GROUP BY Hotel.Name;
-```
-
-10. **Create a view on the above database and query it:**
-
-To create a view, you can use the following SQL statement:
+8. List all guests currently staying at the Grosvenor Hotel:
 
 ```sql
-CREATE VIEW HotelRoomSummary AS
-SELECT h.Name AS HotelName, h.City, r.Type, r.Price
-FROM Hotel h
-LEFT JOIN Room r ON h.HotelNo = r.HotelNo;
+SELECT G.GuestName
+FROM Guest G
+JOIN Booking B ON G.GuestNo = B.GuestNo
+WHERE B.HotelNo = 1;
 ```
 
-Once you've created the view, you can query it like a table. For example, to list the details of all hotels:
+9. List the number of rooms in each hotel in London:
 
 ```sql
-SELECT *
-FROM HotelRoomSummary;
+SELECT H.Name, COUNT(R.RoomNo) AS NumberOfRooms
+FROM Hotel H
+LEFT JOIN Room R ON H.HotelNo = R.HotelNo
+WHERE H.City = 'London'
+GROUP BY H.Name;
 ```
 
-You can use the view `HotelRoomSummary` to simplify and reuse the queries for reporting purposes.
+10. Create a view on the database and query it:
+
+```sql
+-- Create a view that combines information from Hotel, Room, and Guest
+CREATE VIEW HotelRoomGuest AS
+SELECT H.Name AS HotelName, R.RoomNo, R.Type, R.Price, G.GuestName, G.GuestAddress
+FROM Hotel H
+JOIN Room R ON H.HotelNo = R.HotelNo
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo
+LEFT JOIN Guest G ON B.GuestNo = G.GuestNo;
+
+-- Query the view
+SELECT * FROM HotelRoomGuest;
+```
+
+You've now created tables, inserted data, and executed the SQL queries for the given scenarios. Additionally, you created a view and queried it.
